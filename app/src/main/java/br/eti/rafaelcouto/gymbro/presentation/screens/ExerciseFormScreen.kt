@@ -6,6 +6,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -14,23 +16,53 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import br.eti.rafaelcouto.gymbro.R
 import br.eti.rafaelcouto.gymbro.presentation.components.BottomButtonColumn
 import br.eti.rafaelcouto.gymbro.presentation.components.TextField
 import br.eti.rafaelcouto.gymbro.presentation.uistate.ExerciseFormUiState
 import br.eti.rafaelcouto.gymbro.presentation.uistate.MainActivityUiState
+import br.eti.rafaelcouto.gymbro.presentation.viewmodel.ExerciseFormViewModel
 
 @Composable
 fun ExerciseFormScreen(
     onSaveExercise: () -> Unit = {},
-    onDeleteExerciseClicked: () -> Unit = {},
+    onDeleteExercise: () -> Unit = {},
+    showMessage: (String) -> Unit = {},
+    setMainActivityState: (MainActivityUiState) -> Unit = {}
+) {
+
+    val viewModel: ExerciseFormViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.loadContent() }
+
+    ExerciseFormScreen(
+        onSaveExercise = {
+            viewModel.saveExercise()
+            onSaveExercise()
+        },
+        onDeleteExercise = {
+            viewModel.deleteExercise()
+            onDeleteExercise()
+        },
+        showMessage = showMessage,
+        setMainActivityState = setMainActivityState,
+        state = state
+    )
+}
+
+@Composable
+fun ExerciseFormScreen(
+    onSaveExercise: () -> Unit = {},
+    onDeleteExercise: () -> Unit = {},
     showMessage: (String) -> Unit = {},
     setMainActivityState: (MainActivityUiState) -> Unit = {},
     state: ExerciseFormUiState = ExerciseFormUiState()
 ) {
 
-    val deleteExerciseMessage = stringResource(id = R.string.exercise_deleted)
     val saveExerciseMessage = stringResource(state.successMessage)
+    val deleteExerciseMessage = stringResource(id = R.string.exercise_deleted)
 
     BottomButtonColumn(
         buttonText = stringResource(id = R.string.save_exercise),
@@ -97,7 +129,7 @@ fun ExerciseFormScreen(
                     IconButton(
                         modifier = Modifier.semantics { testTag = "deleteAction" },
                         onClick = {
-                            onDeleteExerciseClicked()
+                            onDeleteExercise()
                             showMessage(deleteExerciseMessage)
                         },
                         content = {
@@ -116,7 +148,7 @@ fun ExerciseFormScreen(
 @Preview(showSystemUi = true)
 @Composable
 private fun ExerciseFormScreenDefaultPreview() {
-    ExerciseFormScreen()
+    ExerciseFormScreen(state = ExerciseFormUiState())
 }
 
 @Preview(showSystemUi = true)

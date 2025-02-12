@@ -26,6 +26,8 @@ class ExerciseListViewModel @Inject constructor(
     val uiState
         get() = _uiState.asStateFlow()
 
+    private var isDeleting = false
+
     fun loadContent() {
         val workoutId: Long = requireNotNull(savedStateHandle[workoutIdArg])
 
@@ -68,6 +70,7 @@ class ExerciseListViewModel @Inject constructor(
     }
 
     fun deleteWorkout() {
+        isDeleting = true
         viewModelScope.launch {
             workoutUseCase.deleteWorkout(_uiState.value.workout.id)
         }
@@ -87,6 +90,8 @@ class ExerciseListViewModel @Inject constructor(
     private fun loadExercises(workoutId: Long) {
         viewModelScope.launch {
             exerciseUseCase.getAllExercises(workoutId).collect { exercises ->
+                if (isDeleting) return@collect
+
                 _uiState.update { state ->
                     state.copy(
                         exercises = exercises.map { exercise ->

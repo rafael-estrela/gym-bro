@@ -12,6 +12,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
@@ -21,6 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import br.eti.rafaelcouto.gymbro.R
 import br.eti.rafaelcouto.gymbro.data.structure.CircularLinkedList
 import br.eti.rafaelcouto.gymbro.domain.model.Workout
@@ -29,13 +32,33 @@ import br.eti.rafaelcouto.gymbro.presentation.components.EmptyMessage
 import br.eti.rafaelcouto.gymbro.presentation.components.FloatingActionButton
 import br.eti.rafaelcouto.gymbro.presentation.uistate.MainActivityUiState
 import br.eti.rafaelcouto.gymbro.presentation.uistate.WorkoutListScrenUiState
+import br.eti.rafaelcouto.gymbro.presentation.viewmodel.WorkoutListViewModel
+
+@Composable
+fun WorkoutListScreen(
+    onWorkoutSelected: (Workout) -> Unit = {},
+    onFabClicked: () -> Unit = {},
+    setMainActivityState: (MainActivityUiState) -> Unit = {}
+) {
+    val viewModel: WorkoutListViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.loadContent() }
+
+    WorkoutListScreen(
+        onWorkoutSelected = onWorkoutSelected,
+        onFabClicked = onFabClicked,
+        setMainActivityState = setMainActivityState,
+        state = state
+    )
+}
 
 @Composable
 fun WorkoutListScreen(
     onWorkoutSelected: (Workout) -> Unit = {},
     onFabClicked: () -> Unit = {},
     setMainActivityState: (MainActivityUiState) -> Unit = {},
-    state: WorkoutListScrenUiState = WorkoutListScrenUiState()
+    state: WorkoutListScrenUiState
 ) {
     if (state.shouldDisplayEmptyMessage)
         EmptyMessage(
@@ -115,7 +138,7 @@ fun WorkoutItem(
 @Preview(showSystemUi = true)
 @Composable
 private fun WorkoutListScreenEmptyPreview() {
-    WorkoutListScreen()
+    WorkoutListScreen(state = WorkoutListScrenUiState())
 }
 
 @Preview(showSystemUi = true)

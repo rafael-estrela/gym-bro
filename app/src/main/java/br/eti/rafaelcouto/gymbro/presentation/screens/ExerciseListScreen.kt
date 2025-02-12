@@ -20,6 +20,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
@@ -29,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import br.eti.rafaelcouto.gymbro.R
 import br.eti.rafaelcouto.gymbro.domain.model.Exercise
 import br.eti.rafaelcouto.gymbro.presentation.components.Checkbox
@@ -38,18 +41,55 @@ import br.eti.rafaelcouto.gymbro.presentation.components.FloatingActionButton
 import br.eti.rafaelcouto.gymbro.presentation.components.RoundedButton
 import br.eti.rafaelcouto.gymbro.presentation.uistate.ExerciseListUiState
 import br.eti.rafaelcouto.gymbro.presentation.uistate.MainActivityUiState
+import br.eti.rafaelcouto.gymbro.presentation.viewmodel.ExerciseListViewModel
+
+@Composable
+fun ExerciseListScreen(
+    onEditExerciseClick: (Exercise) -> Unit = {},
+    onAddExercise: (Long) -> Unit = {},
+    onEditWorkout: (Long) -> Unit = {},
+    onDeleteWorkout: () -> Unit = {},
+    showMessage: (String) -> Unit = {},
+    setMainActivityState: (MainActivityUiState) -> Unit = {}
+) {
+
+    val viewModel: ExerciseListViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadContent()
+    }
+
+    ExerciseListScreen(
+        onIncreaseLoad = viewModel::increaseLoad,
+        onDecreaseLoad = viewModel::decreaseLoad,
+        onSetFinshed = viewModel::finishSet,
+        onEditExercise = onEditExerciseClick,
+        onAddExercise = onAddExercise,
+        onFinishWorkout = viewModel::finishWorkout,
+        onMenuToggle = viewModel::setMenuState,
+        onEditWorkout = onEditWorkout,
+        onDeleteWorkout = {
+            viewModel.deleteWorkout()
+            onDeleteWorkout()
+        },
+        showMessage = showMessage,
+        setMainActivityState = setMainActivityState,
+        state = state
+    )
+}
 
 @Composable
 fun ExerciseListScreen(
     onIncreaseLoad: (Exercise) -> Unit = {},
     onDecreaseLoad: (Exercise) -> Unit = {},
     onSetFinshed: (exercise: Exercise.UI, set: Int) -> Unit = { _, _ -> },
-    onEditExerciseClick: (Exercise) -> Unit = {},
+    onEditExercise: (Exercise) -> Unit = {},
     onAddExercise: (Long) -> Unit = {},
     onFinishWorkout: () -> Unit = {},
     onMenuToggle: (Boolean) -> Unit = {},
-    onEditWorkoutClick: (Long) -> Unit = {},
-    onDeleteWorkoutClicked: () -> Unit = {},
+    onEditWorkout: (Long) -> Unit = {},
+    onDeleteWorkout: () -> Unit = {},
     showMessage: (String) -> Unit = {},
     setMainActivityState: (MainActivityUiState) -> Unit = {},
     state: ExerciseListUiState = ExerciseListUiState()
@@ -72,13 +112,12 @@ fun ExerciseListScreen(
         exercises = state.exercises,
         onIncreaseLoad = onIncreaseLoad,
         onDecreaseLoad = onDecreaseLoad,
-        onEditExerciseClick = onEditExerciseClick,
+        onEditExercise = onEditExercise,
         onSetFinished = onSetFinshed
     )
 
     LaunchedEffect(
-        Unit,
-        state.workout,
+        state.workout.name,
         state.canFinishWorkout,
         state.isMenuExpanded,
         state.shouldDisplayEmptyMessage,
@@ -117,7 +156,7 @@ fun ExerciseListScreen(
                             modifier = Modifier.semantics { testTag = "editAction" },
                             text = { Text(text = stringResource(id = R.string.edit)) },
                             onClick = {
-                                onEditWorkoutClick(state.workout.id)
+                                onEditWorkout(state.workout.id)
                                 onMenuToggle(false)
                             }
                         )
@@ -125,7 +164,7 @@ fun ExerciseListScreen(
                             modifier = Modifier.semantics { testTag = "deleteAction" },
                             text = { Text(text = stringResource(id = R.string.delete)) },
                             onClick = {
-                                onDeleteWorkoutClicked()
+                                onDeleteWorkout()
                                 showMessage(workoutDeletedSuccessMessage)
                             }
                         )
@@ -142,7 +181,7 @@ fun ExerciseList(
     exercises: List<Exercise.UI> = emptyList(),
     onIncreaseLoad: (Exercise) -> Unit = {},
     onDecreaseLoad: (Exercise) -> Unit = {},
-    onEditExerciseClick: (Exercise) -> Unit = {},
+    onEditExercise: (Exercise) -> Unit = {},
     onSetFinished: (exercise: Exercise.UI, set: Int) -> Unit = { _, _ -> }
 ) {
 
@@ -154,7 +193,7 @@ fun ExerciseList(
                     exercise = exercise,
                     onIncreaseLoad = onIncreaseLoad,
                     onDecreaseLoad = onDecreaseLoad,
-                    onEditExerciseClick = onEditExerciseClick,
+                    onEditExercise = onEditExercise,
                     onSetFinished = onSetFinished
                 )
             }
@@ -167,7 +206,7 @@ fun ExerciseItem(
     exercise: Exercise.UI,
     onIncreaseLoad: (Exercise) -> Unit = {},
     onDecreaseLoad: (Exercise) -> Unit = {},
-    onEditExerciseClick: (Exercise) -> Unit = {},
+    onEditExercise: (Exercise) -> Unit = {},
     onSetFinished: (exercise: Exercise.UI, set: Int) -> Unit = { _, _ ->}
 ) {
 
@@ -194,7 +233,7 @@ fun ExerciseItem(
             RoundedButton(
                 modifier = Modifier.semantics { testTag = "edit-${exercise.original.id}" },
                 onClick = {
-                    onEditExerciseClick(exercise.original)
+                    onEditExercise(exercise.original)
                 },
                 icon = Icons.Filled.Edit,
                 contentDescription = stringResource(id = R.string.edit_exercise)
@@ -287,7 +326,7 @@ fun ExerciseItem(
 @Preview(showSystemUi = true)
 @Composable
 private fun ExerciseListScreenEmptyPreview() {
-    ExerciseListScreen()
+    ExerciseListScreen(state = ExerciseListUiState())
 }
 
 @Preview(showSystemUi = true)

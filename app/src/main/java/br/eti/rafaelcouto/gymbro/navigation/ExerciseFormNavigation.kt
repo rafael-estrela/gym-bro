@@ -1,9 +1,5 @@
 package br.eti.rafaelcouto.gymbro.navigation
 
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -11,7 +7,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import br.eti.rafaelcouto.gymbro.presentation.screens.ExerciseFormScreen
 import br.eti.rafaelcouto.gymbro.presentation.uistate.MainActivityUiState
-import br.eti.rafaelcouto.gymbro.presentation.viewmodel.ExerciseFormViewModel
 
 const val exerciseFormRoute = "exercise"
 const val exerciseIdArg = "exerciseId"
@@ -35,23 +30,12 @@ fun NavGraphBuilder.exerciseFormScreen(
             }
         )
     ) {
-        val viewModel: ExerciseFormViewModel = hiltViewModel()
-        val state by viewModel.uiState.collectAsState()
-
-        LaunchedEffect(Unit) { viewModel.loadContent() }
 
         ExerciseFormScreen(
-            onSaveExercise = {
-                viewModel.saveExercise()
-                navController.popBackStack()
-            },
-            onDeleteExerciseClicked = {
-                viewModel.deleteExercise()
-                navController.popBackStack()
-            },
+            onSaveExercise = navController::popBackStack,
+            onDeleteExercise = navController::popBackStack,
             showMessage = showMessage,
-            setMainActivityState = setMainActivityState,
-            state = state
+            setMainActivityState = setMainActivityState
         )
     }
 }
